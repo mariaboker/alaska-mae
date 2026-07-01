@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🪆 Alaska — Viagem da Maria</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface2: #f0f2f5;
+    --border: #e0e3ea;
+    --accent: #2563eb;
+    --accent2: #16a34a;
+    --warn: #d97706;
+    --text: #111827;
+    --muted: #6b7280;
+    --hike: #16a34a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    padding-bottom: 60px;
+  }
+
+  .hero {
+    background: linear-gradient(160deg, #dbeafe 0%, #f0fdf4 100%);
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #1e3a5f; }
+  .hero p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .hero-sub { font-size: 14px; color: #1e3a5f; margin-top: 8px; font-style: italic; }
+  .hero-meta { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .badge span { color: var(--text); font-weight: 600; }
+
+  .tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .section { display: none; padding: 16px; }
+  .section.active { display: block; }
+
+  .today-banner {
+    background: linear-gradient(135deg, #dbeafe, #dcfce7);
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .today-banner .day-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 600; }
+  .today-banner h2 { font-size: 20px; font-weight: 700; margin-top: 4px; color: #1e3a5f; }
+  .today-banner .location { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .day-header:active { background: var(--surface2); }
+  .day-header-left { display: flex; align-items: center; gap: 12px; }
+  .day-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+  .day-dot.today { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .day-dot.past { background: var(--surface2); border: 1px solid var(--border); }
+  .day-title { font-weight: 600; font-size: 15px; }
+  .day-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .day-chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+  .day-card.open .day-chevron { transform: rotate(180deg); }
+  .day-body { display: none; padding: 0 16px 16px; }
+  .day-card.open .day-body { display: block; }
+
+  .activity {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .activity:last-child { border-bottom: none; }
+  .activity-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; margin-top: 1px; }
+  .activity-content { flex: 1; }
+  .activity-text { font-size: 14px; line-height: 1.4; }
+  .map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+
+  /* WEATHER */
+  .weather-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .weather-card .w-city { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
+  .weather-card .w-dates { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .weather-main { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .weather-icon { font-size: 44px; line-height: 1; }
+  .weather-temp { font-size: 38px; font-weight: 700; color: var(--text); }
+  .weather-desc { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .weather-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .weather-detail { background: var(--surface2); border-radius: 10px; padding: 8px; text-align: center; }
+  .weather-detail .wd-val { font-size: 14px; font-weight: 600; }
+  .weather-detail .wd-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .weather-loading { color: var(--muted); font-size: 13px; padding: 12px 0; }
+  .weather-tip {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #92400e;
+    background: #fef9ee;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  /* FACTS */
+  .fact-location {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .fact-location-header {
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .fact-location-header h3 { font-size: 15px; font-weight: 600; }
+  .fact-location-header .chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+  .fact-location.open .fact-location-header .chevron { transform: rotate(180deg); }
+  .facts-body { display: none; padding: 0 16px 16px; }
+  .fact-location.open .facts-body { display: block; }
+  .fact-item { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.5; }
+  .fact-item:last-child { border-bottom: none; }
+  .fact-emoji { font-size: 20px; display: block; margin-bottom: 6px; }
+  .fact-title { font-weight: 600; margin-bottom: 4px; }
+  .fact-text { color: var(--muted); }
+
+  /* TRAIL CARDS */
+  .trail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .trail-card h3 { font-size: 16px; font-weight: 600; }
+  .trail-day { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .trail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+  .trail-stat { background: var(--surface2); border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .trail-stat .val { font-size: 16px; font-weight: 700; color: var(--hike); }
+  .trail-stat .lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .difficulty { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-bottom: 10px; }
+  .diff-easy { background: #dcfce7; color: #15803d; }
+  .diff-moderate { background: #fef9c3; color: #a16207; }
+  .diff-strenuous { background: #fee2e2; color: #b91c1c; }
+  .trail-tip { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; padding: 8px 10px; background: var(--surface2); border-radius: 8px; margin-bottom: 6px; color: var(--muted); }
+
+  /* MAP TAB */
+  .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .info-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 14px; gap: 8px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--muted); font-size: 13px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🪆 Alaska</h1>
+  <p>1 a 12 de julho de 2026</p>
+  <div class="hero-sub">A viagem da Maria! 🏔️🐻🐋</div>
+  <div class="hero-meta">
+    <div class="badge">Grupo <span>Maria · Katherine · Nalini</span></div>
+    <div class="badge">Dias <span>12</span></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('hoje')">Hoje</div>
+  <div class="tab" onclick="showTab('roteiro')">Roteiro</div>
+  <div class="tab" onclick="showTab('trilhas')">Trilhas</div>
+  <div class="tab" onclick="showTab('curiosidades')">Curiosidades</div>
+  <div class="tab" onclick="showTab('tempo')">Tempo</div>
+  <div class="tab" onclick="showTab('mapa')">Mapa</div>
+</div>
+
+<!-- HOJE TAB -->
+<div id="tab-hoje" class="section active">
+  <div id="hoje-banner" class="today-banner"></div>
+  <div id="weather-widget-mae" style="margin-bottom:16px;"></div>
+  <div class="section-label">Programa do dia</div>
+  <div id="hoje-activities"></div>
+</div>
+
+<!-- ROTEIRO TAB -->
+<div id="tab-roteiro" class="section">
+  <div id="roteiro-list"></div>
+</div>
+
+<!-- TRILHAS TAB -->
+<div id="tab-trilhas" class="section">
+  <div class="section-label">Todas as caminhadas da viagem</div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 0 · 1 Jul · Anchorage</div>
+    <h3>Gold Cord Lake Trail</h3>
+    <span class="difficulty diff-easy">Fácil</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">3 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">1,5–2h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">~120m</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">🌅 Caminhada leve ao pôr do sol perto do Hatcher Pass Lodge. Lago lindo.</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Gold+Cord+Lake+Hatcher+Pass+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 1 · 2 Jul · Hatcher Pass</div>
+    <h3>Reed Lakes Trail (Lago Superior)</h3>
+    <span class="difficulty diff-moderate">Moderada</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">11 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">6–7h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">~550m</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">💎 Uma das favoritas da viagem. O lago superior tem uma cor turquesa incrível.</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Reed+Lakes+Trail+Hatcher+Pass+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 2 · 3 Jul · Hatcher Pass</div>
+    <h3>Summit Lake</h3>
+    <span class="difficulty diff-easy">Fácil</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">~3 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">~1h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">~90m</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">🏔️ Vista panorâmica incrível do alto da montanha.</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Summit+Lake+Hatcher+Pass+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 3 · 4 Jul · Glacier Matanuska</div>
+    <h3>Caminhada Guiada no Glaciar</h3>
+    <span class="difficulty diff-moderate">Moderada (com guia)</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">~8 km</div><div class="lbl">No gelo</div></div>
+      <div class="trail-stat"><div class="val">5,5h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">Confirmado</div><div class="lbl">Reserva</div></div>
+    </div>
+    <div class="trail-tip">🧊 Caminhada no gelo com crampons fornecidos. Experiência única! 13h30–19h.</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Matanuska+Glacier+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 4 · 5 Jul · Girdwood</div>
+    <h3>Winner Creek Trail</h3>
+    <span class="difficulty diff-easy">Fácil</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">7 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">2–3h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">~90m</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">🌿 Floresta densa e verdejante. Tem uma tirolesa manual sobre um desfiladeiro!</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Winner+Creek+Trail+Girdwood+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 5 · 6 Jul · Girdwood → Seward</div>
+    <h3>Trail of Blue Ice (Trilha do Gelo Azul)</h3>
+    <span class="difficulty diff-easy">Fácil</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">6 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">~3h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">~90m</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">🫐 Vista para lago glacial azul-turquesa. Área de Portage.</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Trail+of+Blue+Ice+Portage+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 6 · 7 Jul · Seward</div>
+    <h3>Trilha Tonsina até a Praia de Lowell Point</h3>
+    <span class="difficulty diff-easy">Fácil</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">~5 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">~2h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">~120m</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">🌊 Floresta com musgo que termina em uma praia na Baía da Ressurreição. Muito bonito!</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Tonsina+Trail+Lowell+Point+Seward+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 7 · 8 Jul · Kenai Fjords</div>
+    <h3>Harding Icefield Trail</h3>
+    <span class="difficulty diff-strenuous">Difícil</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">14 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">~7h</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">~900m</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">🏔️ A trilha mais recompensadora do Alaska. Vista do maior campo de gelo dos EUA. Vai fazer muito bem!</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Harding+Icefield+Trail+Kenai+Fjords+National+Park" target="_blank">📍 Ver no Maps</a>
+  </div>
+
+  <div class="trail-card">
+    <div class="trail-day">Dia 8 · 9 Jul · Seward</div>
+    <h3>Trilha da Orla de Seward</h3>
+    <span class="difficulty diff-easy">Fácil (Pavimentada)</span>
+    <div class="trail-stats">
+      <div class="trail-stat"><div class="val">~3 km</div><div class="lbl">Distância</div></div>
+      <div class="trail-stat"><div class="val">45 min</div><div class="lbl">Duração</div></div>
+      <div class="trail-stat"><div class="val">Plana</div><div class="lbl">Elevação</div></div>
+    </div>
+    <div class="trail-tip">🚶 Caminhada tranquila com vista para o porto. Ótima para recuperar as pernas!</div>
+    <a class="map-btn" href="https://maps.google.com/?q=Seward+Waterfront+Trail+Alaska" target="_blank">📍 Ver no Maps</a>
+  </div>
+</div>
+
+<!-- CURIOSIDADES TAB -->
+<div id="tab-curiosidades" class="section">
+  <div class="section-label">Fatos curiosos por cidade</div>
+
+  <div class="fact-location open">
+    <div class="fact-location-header" onclick="toggleFact(this)">
+      <h3>📍 Anchorage</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="facts-body">
+      <div class="fact-item">
+        <span class="fact-emoji">🏔️</span>
+        <div class="fact-title">Montanhas na cidade</div>
+        <div class="fact-text">Anchorage é uma das únicas grandes cidades onde você pode ver seis glaciares do centro. Em dias claros, o Denali (6.190m) aparece no horizonte — a 250km de distância!</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🌞</span>
+        <div class="fact-title">Sol da meia-noite</div>
+        <div class="fact-text">Em julho, Anchorage tem quase 20 horas de luz por dia. O pôr do sol é só por volta das 23h30! A Maria vai precisar de máscara para dormir.</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🫎</span>
+        <div class="fact-title">Alces na cidade</div>
+        <div class="fact-text">Há cerca de 1.500 alces vivendo dentro e ao redor de Anchorage. É comum vê-los na rua! São animais grandes e não devem ser aproximados.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fact-location">
+    <div class="fact-location-header" onclick="toggleFact(this)">
+      <h3>📍 Hatcher Pass</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="facts-body">
+      <div class="fact-item">
+        <span class="fact-emoji">⛏️</span>
+        <div class="fact-title">Corrida do ouro</div>
+        <div class="fact-text">A Mina Independence, que elas vão visitar, foi o segundo maior produtor de ouro do Alaska durante a 2ª Guerra Mundial. Foi abandonada em 1951 quando os preços caíram.</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🌸</span>
+        <div class="fact-title">Flores silvestres</div>
+        <div class="fact-text">Julho é a época de pico das flores silvestres em Hatcher Pass. Os campos ficam cobertos de fireweed (uma flor cor-de-rosa vibrante típica do Alaska).</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🏔️</span>
+        <div class="fact-title">Lago Reed</div>
+        <div class="fact-text">O Lago Reed fica a 1.370m de altitude. Aquelas paredes íngremes em forma de tigela foram esculpidas por glaciares há mais de 10.000 anos.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fact-location">
+    <div class="fact-location-header" onclick="toggleFact(this)">
+      <h3>📍 Lago Eklutna</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="facts-body">
+      <div class="fact-item">
+        <span class="fact-emoji">💧</span>
+        <div class="fact-title">Água para Anchorage</div>
+        <div class="fact-text">O Lago Eklutna abastece ~90% da água potável de Anchorage. A farinha glacial suspensa nele é o que deixa a cor turquesa tão intensa e bonita.</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🏔️</span>
+        <div class="fact-title">Glaciar que derrete</div>
+        <div class="fact-text">O lago é alimentado pelo Glaciar Eklutna, que recuou mais de 5km desde 1900. Uma consequência visível das mudanças climáticas.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fact-location">
+    <div class="fact-location-header" onclick="toggleFact(this)">
+      <h3>📍 Glaciar Matanuska</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="facts-body">
+      <div class="fact-item">
+        <span class="fact-emoji">🧊</span>
+        <div class="fact-title">Gelo antigo</div>
+        <div class="fact-text">O Matanuska é o maior glaciar acessível de carro nos EUA. O gelo que elas vão pisar tem ~10.000 anos e pode chegar a 300 metros de espessura!</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🔵</span>
+        <div class="fact-title">Por que o gelo é azul?</div>
+        <div class="fact-text">O gelo glacial parece azul porque absorve as ondas de luz vermelha e reflete o azul. Quanto mais velho e denso o gelo, mais intensamente azul ele fica.</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">📏</span>
+        <div class="fact-title">42km de comprimento</div>
+        <div class="fact-text">O Glaciar Matanuska tem 42km de comprimento e 6km de largura. Ele recua cerca de 10–12 metros por ano.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fact-location">
+    <div class="fact-location-header" onclick="toggleFact(this)">
+      <h3>📍 Girdwood e Turnagain Arm</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="facts-body">
+      <div class="fact-item">
+        <span class="fact-emoji">🌊</span>
+        <div class="fact-title">Marés extremas</div>
+        <div class="fact-text">O Turnagain Arm tem uma das maiores variações de maré do mundo — até 12 metros! O mar sobe e desce de forma rápida e impressionante.</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🐬</span>
+        <div class="fact-title">Baleias beluga em Beluga Point</div>
+        <div class="fact-text">A parada em Beluga Point tem esse nome pelas pequenas baleias brancas que sobem o Turnagain Arm em julho para caçar salmão. Com binóculo dá para ver!</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🍁</span>
+        <div class="fact-title">Girdwood e o terremoto</div>
+        <div class="fact-text">A cidade antiga de Girdwood foi destruída no terremoto de 1964 — magnitude 9.2, o segundo maior da história. A cidade foi reconstruída 3km para dentro.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fact-location">
+    <div class="fact-location-header" onclick="toggleFact(this)">
+      <h3>📍 Seward e Kenai Fjords</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="facts-body">
+      <div class="fact-item">
+        <span class="fact-emoji">🐋</span>
+        <div class="fact-title">Baleias jubarte</div>
+        <div class="fact-text">Kenai Fjords é um dos melhores lugares do mundo para ver baleias jubarte caçando em grupo — elas formam uma espiral embaixo d'água soprando bolhas para cercar peixes!</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🏔️</span>
+        <div class="fact-title">Campo de gelo Harding</div>
+        <div class="fact-text">O Campo de Gelo Harding tem 1.800km² e alimenta 40 glaciares. Do topo da trilha, dá para ver um dos maiores campos de gelo dos EUA.</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">🦦</span>
+        <div class="fact-title">Retorno das lontras marinhas</div>
+        <div class="fact-text">As lontras marinhas quase foram extintas no Alaska por causa da caça. Hoje, Kenai Fjords tem milhares delas. São essenciais para o ecossistema marinho.</div>
+      </div>
+      <div class="fact-item">
+        <span class="fact-emoji">❄️</span>
+        <div class="fact-title">O glaciar que encolhe</div>
+        <div class="fact-text">Na trilha do Exit Glacier, há placas mostrando até onde o glaciar chegava em décadas passadas. Desde 1815, ele recuou mais de 1,5km. Dá para ver a mudança climática acontecendo.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPO TAB -->
+<div id="tab-tempo" class="section">
+  <div class="section-label">Previsão do tempo — Cidades da viagem</div>
+  <div id="weather-all-mae"></div>
+  <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;">Dados: wttr.in · Atualiza quando há internet</div>
+</div>
+
+<!-- MAPA TAB -->
+<div id="tab-mapa" class="section" style="padding:0;">
+  <div style="padding:16px 16px 8px;">
+    <div class="section-label" style="margin:0 0 8px;">Rota completa</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Toque em qualquer parada para abrir no Maps.</p>
+    <a href="https://www.google.com/maps/dir/Anchorage+Airport,+Alaska/Hatcher+Pass,+Alaska/Eklutna+Lake,+Alaska/Glacier+View,+Alaska/Matanuska+Glacier,+Alaska/Girdwood,+Alaska/Portage+Glacier,+Alaska/Seward,+Alaska/Anchorage,+Alaska"
+       target="_blank"
+       style="display:flex;align-items:center;justify-content:space-between;background:#dbeafe;border:1px solid #bfdbfe;border-radius:12px;padding:14px 16px;text-decoration:none;color:#1e3a5f;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">🗺️</span>
+        <div>
+          <div style="font-weight:600;font-size:14px;">Ver rota completa no Google Maps</div>
+          <div style="font-size:11px;color:#4a7ab5;margin-top:2px;">Anchorage → Hatcher Pass → Glacier View → Girdwood → Seward</div>
+        </div>
+      </div>
+      <span style="color:#2563eb;font-size:18px;">→</span>
+    </a>
+  </div>
+
+  <div style="padding:0 16px 16px;">
+    <div class="section-label" style="margin-bottom:10px;">Parada por parada</div>
+    <div class="info-card">
+      <div class="info-row">
+        <span style="font-weight:600;">1. Anchorage</span>
+        <a href="https://maps.google.com/?q=Anchorage+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">2. Hatcher Pass</span>
+          <a href="https://maps.google.com/?q=Hatcher+Pass+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Trilhas · Mina de ouro · Lagos turquesa</div>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">3. Lago Eklutna</span>
+          <a href="https://maps.google.com/?q=Eklutna+Lake+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Passeio de bike · Água turquesa</div>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">4. Glaciar Matanuska 🧊</span>
+          <a href="https://maps.google.com/?q=Matanuska+Glacier+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Caminhada guiada no gelo · 13h30–19h</div>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">5. Beluga Point</span>
+          <a href="https://maps.google.com/?q=Beluga+Point+Turnagain+Arm+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Mirante para ver baleias beluga e cabras montesas</div>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">6. Girdwood</span>
+          <a href="https://maps.google.com/?q=Girdwood+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Trilha Winner Creek · Spa nórdico Alyeska</div>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">7. Portage / Gelo Azul</span>
+          <a href="https://maps.google.com/?q=Trail+of+Blue+Ice+Portage+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Trilha do Gelo Azul · Centro de Animais Selvagens</div>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">8. Seward 🐋</span>
+          <a href="https://maps.google.com/?q=Seward+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Trilha Harding Icefield · Passeio de baleia · Ray's Waterfront</div>
+      </div>
+      <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+          <span style="font-weight:600;">9. Anchorage (volta)</span>
+          <a href="https://maps.google.com/?q=Anchorage+Market+Festival+Alaska" target="_blank" class="map-btn">📍 Maps</a>
+        </div>
+        <div class="info-label">Mercado local · Trilha costeira · Hamburguer de iaque 🦬</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const dias = [
+  {
+    date: "2026-07-01",
+    label: "Qua, 1 Jul",
+    title: "Dia 0: Chegada em Anchorage",
+    location: "Anchorage",
+    mapQuery: "Ted Stevens Anchorage International Airport",
+    atividades: [
+      { icon: "✈️", text: "Chega às 21h" },
+      { icon: "🍽️", text: "Jantar" },
+      { icon: "📘", text: "Dorme: Hotel em Anchorage" }
+    ]
+  },
+  {
+    date: "2026-07-02",
+    label: "Qui, 2 Jul",
+    title: "Dia 1: Explorando Anchorage",
+    location: "Anchorage → Hatcher Pass",
+    mapQuery: "Hatcher Pass Lodge Alaska",
+    atividades: [
+      { icon: "🖼️", text: "Alaska Native Heritage Center · 9h–13h", map: "Alaska Native Heritage Center Anchorage" },
+      { icon: "🍽️", text: "Almoço: Rena do Alaska no restaurante Tia's + sorvete Wild Scoops", map: "Tia's Reindeer Alaska Anchorage" },
+      { icon: "🛒", text: "Supermercado" },
+      { icon: "🚗", text: "Viagem para Hatcher Pass · ~1h15", map: "Hatcher Pass Alaska" },
+      { icon: "🥾", text: "Trilha ao pôr do sol: Gold Cord Lake · 3km · 1,5–2h", map: "Gold Cord Lake Hatcher Pass Alaska" },
+      { icon: "📘", text: "Dorme: Hatcher Pass / Palmer" }
+    ]
+  },
+  {
+    date: "2026-07-03",
+    label: "Sex, 3 Jul",
+    title: "Dia 2: Trilha longa em Hatcher Pass",
+    location: "Hatcher Pass",
+    mapQuery: "Reed Lakes Trail Hatcher Pass Alaska",
+    atividades: [
+      { icon: "🥾", text: "Reed Lakes Trail — Lago Superior · 11km · 6–7h", map: "Reed Lakes Trail Hatcher Pass Alaska" },
+      { icon: "🍽️", text: "Almoço" },
+      { icon: "🖼️", text: "Independence Mine State Historical Park (mina de ouro histórica)", map: "Independence Mine State Historical Park Alaska" },
+      { icon: "🌄", text: "Summit Lake (vista panorâmica)", map: "Summit Lake Hatcher Pass Alaska" },
+      { icon: "🍽️", text: "Jantar" },
+      { icon: "📘", text: "Dorme: Hatcher Pass" }
+    ]
+  },
+  {
+    date: "2026-07-04",
+    label: "Sáb, 4 Jul · 🎆 Dia da Independência EUA",
+    title: "Dia 3: Lago Eklutna",
+    location: "Eklutna → Glacier View",
+    mapQuery: "Eklutna Lake Alaska",
+    atividades: [
+      { icon: "🚗", text: "Viagem para Eklutna · ~1h" },
+      { icon: "🌄", text: "Parada: Eklutna Tailrace — ponte sobre água turquesa", map: "Eklutna Tailrace Alaska" },
+      { icon: "🚴", text: "Passeio de bike no Lago Eklutna · 2h", map: "Eklutna Lake Alaska" },
+      { icon: "🍽️", text: "Almoço em Palmer", map: "Palmer Alaska" },
+      { icon: "🚗", text: "Viagem para Glacier View · ~1h30" },
+      { icon: "🏠", text: "Check-in: Cabana Glacier View", map: "Glacier View Alaska" },
+      { icon: "🍽️", text: "Jantar de aniversário para a Nalini 🎂" }
+    ]
+  },
+  {
+    date: "2026-07-05",
+    label: "Dom, 5 Jul · 🎉 ANIVERSÁRIO DA NALINI!",
+    title: "Dia 4: Glaciar Matanuska",
+    location: "Glacier View → Girdwood",
+    mapQuery: "Matanuska Glacier Alaska",
+    atividades: [
+      { icon: "🍳", text: "Brunch de aniversário 🎉" },
+      { icon: "🥾", text: "Caminhada guiada no Glaciar Matanuska · 13h30–19h ✅ Confirmado", map: "Matanuska Glacier Alaska" },
+      { icon: "🚗", text: "Viagem pela Seward Highway · ~2h" },
+      { icon: "🌄", text: "Parada: Beluga Point (ver baleias brancas!)", map: "Beluga Point Turnagain Arm Alaska" },
+      { icon: "🌄", text: "Parada: Bird Point (cabras montesas)", map: "Bird Point Seward Highway Alaska" },
+      { icon: "🏠", text: "Check-in: Cabana Girdwood", map: "Girdwood Alaska" }
+    ]
+  },
+  {
+    date: "2026-07-06",
+    label: "Seg, 6 Jul",
+    title: "Dia 5: Relaxando em Girdwood",
+    location: "Girdwood",
+    mapQuery: "Girdwood Alaska",
+    atividades: [
+      { icon: "🛒", text: "Supermercado" },
+      { icon: "🥾", text: "Winner Creek Trail · 7km · 2–3h · floresta com tirolesa manual!", map: "Winner Creek Trail Girdwood Alaska" },
+      { icon: "🍽️", text: "Almoço" },
+      { icon: "♨️", text: "Alyeska Nordic Spa · 14h–21h · piscinas quentes/frias e saunas", map: "Alyeska Nordic Spa Girdwood Alaska" },
+      { icon: "🍽️", text: "Jantar em casa" },
+      { icon: "📘", text: "Dorme: Cabana Girdwood" }
+    ]
+  },
+  {
+    date: "2026-07-07",
+    label: "Ter, 7 Jul",
+    title: "Dia 6: Rumo a Seward",
+    location: "Girdwood → Seward",
+    mapQuery: "Seward Alaska",
+    atividades: [
+      { icon: "🥾", text: "Trail of Blue Ice · 6km · ~3h", map: "Trail of Blue Ice Portage Alaska" },
+      { icon: "🦁", text: "Alaska Wildlife Conservation Center (animais selvagens)", map: "Alaska Wildlife Conservation Center Portage Alaska" },
+      { icon: "🚗", text: "Viagem para Seward" },
+      { icon: "🌄", text: "Parada: Lago Kenai", map: "Kenai Lake Alaska" },
+      { icon: "🏠", text: "Check-in: Seward" }
+    ]
+  },
+  {
+    date: "2026-07-08",
+    label: "Qua, 8 Jul",
+    title: "Dia 7: Seward",
+    location: "Seward",
+    mapQuery: "Seward Harbor Alaska",
+    atividades: [
+      { icon: "🐟", text: "Alaska SeaLife Center (aquário e animais marinhos)", map: "Alaska SeaLife Center Seward" },
+      { icon: "🍽️", text: "Almoço: The Cookery no porto de Seward", map: "The Cookery Seward Alaska" },
+      { icon: "🥾", text: "Trilha Tonsina até Praia de Lowell Point · floresta e Baía da Ressurreição", map: "Tonsina Trail Lowell Point Seward Alaska" },
+      { icon: "📘", text: "Dorme: Seward" }
+    ]
+  },
+  {
+    date: "2026-07-09",
+    label: "Qui, 9 Jul",
+    title: "Dia 8: Trilha épica do Glaciar",
+    location: "Seward / Exit Glacier",
+    mapQuery: "Exit Glacier Kenai Fjords National Park",
+    atividades: [
+      { icon: "🥾", text: "Harding Icefield Trail · 14km · 7h · vista do campo de gelo enorme!", map: "Harding Icefield Trail Exit Glacier Alaska" },
+      { icon: "🍽️", text: "Almoço: Miler's Landing", map: "Miller's Landing Seward Alaska" },
+      { icon: "📘", text: "Dorme: Seward" }
+    ]
+  },
+  {
+    date: "2026-07-10",
+    label: "Sex, 10 Jul",
+    title: "Dia 9: Passeio de baleia! 🐋",
+    location: "Seward / Kenai Fjords",
+    mapQuery: "Seward Small Boat Harbor Alaska",
+    atividades: [
+      { icon: "⛵", text: "Passeio de barco para ver baleias · 7,5h · jubarte, orca e glaciares · inclui almoço", map: "Seward Small Boat Harbor Alaska" },
+      { icon: "🚶", text: "Caminhada na orla de Seward · 45min", map: "Seward Waterfront Trail Alaska" },
+      { icon: "🍽️", text: "Jantar: Ray's Waterfront", map: "Ray's Waterfront Seward Alaska" },
+      { icon: "📘", text: "Dorme: Seward" }
+    ]
+  },
+  {
+    date: "2026-07-11",
+    label: "Sáb, 11 Jul",
+    title: "Dia 10: Voltando para Anchorage",
+    location: "Seward → Anchorage",
+    mapQuery: "Anchorage Market Festival Alaska",
+    atividades: [
+      { icon: "⛵", text: "Caiaque até o Exit Glacier (a confirmar)", map: "Sunny Cove Kayaking Seward Alaska" },
+      { icon: "🚗", text: "Viagem para Anchorage" },
+      { icon: "🌄", text: "Parada: Potter's Marsh (lugar tranquilo)", map: "Potter's Marsh Anchorage Alaska" },
+      { icon: "🎪", text: "Mercado e Festival de Anchorage!", map: "Anchorage Market and Festival" },
+      { icon: "🏠", text: "Check-in: Apartamento em Anchorage" }
+    ]
+  },
+  {
+    date: "2026-07-12",
+    label: "Dom, 12 Jul",
+    title: "Dia 11: Volta para casa ✈️",
+    location: "Anchorage → Aeroporto",
+    mapQuery: "Ted Stevens Anchorage International Airport",
+    atividades: [
+      { icon: "🌊", text: "Trilha Costeira → Earthquake Park", map: "Earthquake Park Anchorage Alaska" },
+      { icon: "🍺", text: "Almoço: 49th State Brewing — hamburguer de iaque!", map: "49th State Brewing Anchorage" },
+      { icon: "🚗", text: "Devolução do carro · 13h15" },
+      { icon: "✈️", text: "Voo de volta · 16h" }
+    ]
+  }
+];
+
+function getTodayIndex() {
+  const today = new Date().toISOString().slice(0, 10);
+  return dias.findIndex(d => d.date === today);
+}
+
+function mapLink(q) {
+  return `https://maps.google.com/?q=${encodeURIComponent(q)}`;
+}
+
+function atividadeHTML(a) {
+  let html = `<div class="activity">
+    <div class="activity-icon">${a.icon}</div>
+    <div class="activity-content">
+      <div class="activity-text">${a.text}</div>`;
+  if (a.map) html += `<a class="map-btn" href="${mapLink(a.map)}" target="_blank">📍 Ver no Maps</a>`;
+  html += `</div></div>`;
+  return html;
+}
+
+function renderHoje() {
+  const idx = getTodayIndex();
+  const banner = document.getElementById('hoje-banner');
+  const cont = document.getElementById('hoje-activities');
+  if (idx === -1) {
+    banner.innerHTML = `<div class="day-label">Viagem</div><h2>🪆 Alaska — Viagem da Maria</h2><div class="location">1 a 12 de julho de 2026</div>`;
+    cont.innerHTML = `<div style="color:var(--muted);text-align:center;padding:30px;font-size:14px;">Veja o Roteiro completo na aba ao lado.</div>`;
+    return;
+  }
+  const d = dias[idx];
+  banner.innerHTML = `<div class="day-label">Hoje · ${d.label}</div><h2>${d.title}</h2><div class="location">📍 ${d.location}</div>`;
+  cont.innerHTML = d.atividades.map(atividadeHTML).join('');
+}
+
+function renderRoteiro() {
+  const todayIdx = getTodayIndex();
+  const cont = document.getElementById('roteiro-list');
+  cont.innerHTML = dias.map((d, i) => {
+    const isToday = i === todayIdx;
+    const isPast = todayIdx !== -1 && i < todayIdx;
+    const dotClass = isToday ? 'today' : isPast ? 'past' : '';
+    return `<div class="day-card ${isToday ? 'open' : ''}" id="dc-${i}">
+      <div class="day-header" onclick="toggleDay(${i})">
+        <div class="day-header-left">
+          <div class="day-dot ${dotClass}"></div>
+          <div>
+            <div class="day-title">${d.title}${isToday ? ' 👈 Hoje' : ''}</div>
+            <div class="day-sub">${d.label} · ${d.location}</div>
+          </div>
+        </div>
+        <div class="day-chevron">▼</div>
+      </div>
+      <div class="day-body">
+        ${d.atividades.map(atividadeHTML).join('')}
+        <a class="map-btn" href="${mapLink(d.mapQuery)}" target="_blank" style="margin-top:10px;display:inline-flex;">🗺️ Ver dia no Maps</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDay(i) {
+  document.getElementById(`dc-${i}`).classList.toggle('open');
+}
+
+function toggleFact(h) {
+  h.parentElement.classList.toggle('open');
+}
+
+// WEATHER
+const cidadesClima = [
+  { city: "Anchorage, Alaska", label: "Anchorage", dates: "1–2 Jul", days: [0,1] },
+  { city: "Palmer, Alaska", label: "Hatcher Pass / Palmer", dates: "2–3 Jul", days: [2,3] },
+  { city: "Glacier View, Alaska", label: "Glacier View", dates: "4 Jul", days: [4] },
+  { city: "Girdwood, Alaska", label: "Girdwood", dates: "5–6 Jul", days: [5,6] },
+  { city: "Seward, Alaska", label: "Seward", dates: "7–10 Jul", days: [7,8,9,10] },
+  { city: "Anchorage, Alaska", label: "Anchorage (volta)", dates: "11–12 Jul", days: [11] },
+];
+
+const iconsClima = { "Sunny":"☀️","Clear":"🌙","Partly cloudy":"⛅","Cloudy":"☁️","Overcast":"☁️","Mist":"🌫️","Fog":"🌫️","Light rain":"🌦️","Moderate rain":"🌧️","Heavy rain":"🌧️","Light snow":"🌨️","default":"🌤️" };
+function getIconClima(d) { for (const k of Object.keys(iconsClima)) { if (d && d.toLowerCase().includes(k.toLowerCase())) return iconsClima[k]; } return iconsClima.default; }
+function cToF(c) { return Math.round(c*9/5+32); }
+
+async function fetchClima(city) {
+  try {
+    const r = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+    if (!r.ok) throw new Error();
+    return await r.json();
+  } catch { return null; }
+}
+
+function climaCardHTML(data, ci) {
+  if (!data) return `<div class="weather-card"><div class="w-city">${ci.label}</div><div class="w-dates">${ci.dates}</div><div class="weather-loading">Sem conexão no momento.</div></div>`;
+  const cur = data.current_condition[0];
+  const tempC = parseInt(cur.temp_C);
+  const desc = cur.weatherDesc[0].value;
+  const humidity = cur.humidity;
+  const windKmph = cur.windspeedKmph;
+  const feelsC = parseInt(cur.FeelsLikeC);
+  const icon = getIconClima(desc);
+  const forecast = data.weather || [];
+  let forecastHTML = '';
+  if (forecast.length > 0) {
+    forecastHTML = `<div style="margin-top:12px;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;">Próximos 3 dias</div>
+      <div style="display:flex;gap:8px;overflow-x:auto;">
+        ${forecast.slice(0,3).map(f => {
+          const maxC = parseInt(f.maxtempC);
+          const minC = parseInt(f.mintempC);
+          const fDesc = f.hourly[4]?.weatherDesc[0]?.value || '';
+          const fIcon = getIconClima(fDesc);
+          const date = new Date(f.date);
+          const dayName = date.toLocaleDateString('pt-BR', {weekday:'short', day:'numeric', month:'short'});
+          return `<div style="flex:0 0 auto;background:var(--surface2);border-radius:10px;padding:10px 12px;text-align:center;min-width:90px;">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">${dayName}</div>
+            <div style="font-size:22px;">${fIcon}</div>
+            <div style="font-size:13px;font-weight:600;margin-top:4px;">${maxC}°C</div>
+            <div style="font-size:11px;color:var(--muted);">${minC}°C</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  const descPT = desc.replace('Sunny','Ensolarado').replace('Clear','Céu limpo').replace('Partly cloudy','Parcialmente nublado').replace('Cloudy','Nublado').replace('Overcast','Encoberto').replace('Light rain','Chuva leve').replace('Moderate rain','Chuva moderada').replace('Heavy rain','Chuva forte');
+  return `<div class="weather-card">
+    <div class="w-city">📍 ${ci.label}</div>
+    <div class="w-dates">${ci.dates}</div>
+    <div class="weather-main">
+      <div class="weather-icon">${icon}</div>
+      <div>
+        <div class="weather-temp">${tempC}°C</div>
+        <div class="weather-desc">${descPT}</div>
+      </div>
+    </div>
+    <div class="weather-details">
+      <div class="weather-detail"><div class="wd-val">${feelsC}°C</div><div class="wd-lbl">Sensação</div></div>
+      <div class="weather-detail"><div class="wd-val">${humidity}%</div><div class="wd-lbl">Umidade</div></div>
+      <div class="weather-detail"><div class="wd-val">${windKmph}km/h</div><div class="wd-lbl">Vento</div></div>
+    </div>
+    ${forecastHTML}
+  </div>`;
+}
+
+async function renderClimaHoje() {
+  const idx = getTodayIndex();
+  const widget = document.getElementById('weather-widget-mae');
+  if (!widget) return;
+  let ci = idx !== -1 ? cidadesClima.find(c => c.days.includes(idx)) : cidadesClima[0];
+  if (!ci) ci = cidadesClima[0];
+  widget.innerHTML = `<div class="weather-card"><div class="w-city">${ci.label}</div><div class="weather-loading">⏳ Carregando tempo...</div></div>`;
+  const data = await fetchClima(ci.city);
+  widget.innerHTML = climaCardHTML(data, ci);
+}
+
+let climaAllLoaded = false;
+async function renderTodasCidades() {
+  const cont = document.getElementById('weather-all-mae');
+  const seen = new Set();
+  const unique = cidadesClima.filter(c => { if (seen.has(c.city+c.dates)) return false; seen.add(c.city+c.dates); return true; });
+  cont.innerHTML = unique.map((c,i) => `<div id="wm-${i}"><div class="weather-card"><div class="w-city">${c.label}</div><div class="weather-loading">⏳ Carregando...</div></div></div>`).join('');
+  for (let i = 0; i < unique.length; i++) {
+    const el = document.getElementById(`wm-${i}`);
+    const data = await fetchClima(unique[i].city);
+    el.innerHTML = climaCardHTML(data, unique[i]);
+  }
+}
+
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (window.event) window.event.target.classList.add('active');
+  if (name === 'tempo' && !climaAllLoaded) {
+    climaAllLoaded = true;
+    renderTodasCidades();
+  }
+}
+
+renderHoje();
+renderRoteiro();
+renderClimaHoje();
+</script>
+</body>
+</html>
